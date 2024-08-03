@@ -38,12 +38,10 @@ class Sensors {
   BH1750 _bh1750a;
   BH1750 _bh1750b;  
   
-  void initResults();
   bool makeCSV(sens vals, char *buf);
 
   unsigned long int _prevTime;
-  int _sensorStatus;
-  
+  int _sensorStatus;  
   sens _results;
   sens _hesults[HPD];
 

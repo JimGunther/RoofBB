@@ -62,18 +62,8 @@ void RainWind::begin(int bootHr) {
   pinMode(RevsPin, INPUT_PULLUP);
   pinMode(WDPin, INPUT_PULLUP);
   
-  //initResults();
   resetHour(bootHr);
   _results.maxRevs = 0;
-}
-
-/**********************************************************************************************************
-initResults(): sets all values to zero: dummy?? NO?? data is sent to Shed if the result was pre-bootup (shed can filter)
-parameters: none
-returns: void
-***********************************************************************************************************/
-void RainWind::initResults() {
-  // 18/07: it looks like no initiation needed! (Maybe for catchups?)
 }
 
 /***********************************************************************************************************
@@ -91,16 +81,6 @@ void RainWind::resetHour(int hr) { // STILL NEEDED I THINK! MAYBE NOT AFTER Rese
   _hesults[hr].gustHr = 0;
   _hesults[hr].revsHr = 0;
 }
-
-/***********************************************************************************************************
-resetDay(): resets "daily" variables to zero
-paramters: none
-returns: void
-************************************************************************************************************/
-void RainWind::resetDay() { // STILL NEEDED I THINK! MAYBE NOT AFTER ResetHour reinstated
-  _cumTipsCount = 0;_currRevs = 0;
-}
-// TRANSFER THIS TO SHED Python
 
 // Various methods to update values in "real time" zones -----------------------------------------
 
@@ -232,6 +212,3 @@ returns: void
 void RainWind::getCSVHour(int hr, char *buf) {
   makeCSVHr(_hesults[hr], buf);
 }
-
-
-

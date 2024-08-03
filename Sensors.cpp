@@ -2,7 +2,7 @@
 #include "Arduino.h"
 #include "Sensors.h"
 
-// --------------------------------------- Version of 30/07/2024 ------------------------------------------
+// --------------------------------------- Version of 02/08/2024 ------------------------------------------
 // Sensors class acts as the interface between 4 I2C sensors and the main ino code
 Sensors::Sensors() : _aht(), _bmp()  {};
 
@@ -71,7 +71,6 @@ bool Sensors::updateBMP() {
     _results.pressure = (int)(0.01f * p);
     return true;
   } else {
-    //Serial.print("Random pressure ");
     unsigned long r = random(40);
     _results.pressure = 980 + (int)r;
     return false;
@@ -157,4 +156,3 @@ returns: void
 void Sensors::getCSVHour(int hr, char* buf) {
   makeCSV(_results, buf); // NB: hourly sensors data are just the realtime values
 }
-

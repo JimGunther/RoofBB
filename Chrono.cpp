@@ -1,7 +1,7 @@
 #include "Arduino.h"
 #include "Chrono.h"
 
-// *********************** Version of 08/06/2024 *******************************************
+// *********************** Version of 02/08/2024 *******************************************
 // Chrono class is a utility serving 2 different but related purposes:
 // 1) it acts as a realtime clock, once fed with starter value from internet - from Comms class
 // 2) it provides a variety of static methods for formatting and "date part" values of datetime,
@@ -148,27 +148,6 @@ returns: int: calculated seconds
 int Chrono::Seconds(unsigned long u) {
   return u % SECS_PER_MINUTE;
 }
-
-/*************************************************************************************************
-Hour(): gets hour (0-23) from unsigned long input
-parameters: none
-returns: bool: True if clock needs resetting 
-***************************************************************************************************/
-bool Chrono::timeToResetClock() {
-  if (hour() != CLOCK_UPD_HR) return false;// add here
-  bool b = false;
-  if (minutes() == CLOCK_UPD_MIN) b = true;
-  if (_prevMin == CLOCK_UPD_MIN) b = false;
-  _prevMin = minutes();
-  return b;
-}
-
-/*************************************************************************************************
-resetClock(): resets Chrono clock from unput unsigned long parameter
-parameters: unix2k: unsigned long representing seconds since 1/1/2000
-returns: void 
-***************************************************************************************************/
-void Chrono::resetClock(unsigned long unix) { _unix2k = unix; }
 
 /**************************************************************************************************
 getIsoDate(): places ISO formatted date for now in buffer buf from day and hour data only

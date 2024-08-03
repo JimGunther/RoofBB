@@ -8,14 +8,13 @@ class Comms {
   public:
   Comms();
   void begin();
+  int nwkIndex();
+  unsigned long timeStamp() { return _tt; }
 
+  private:
   bool readCredentials(); // gets "menu" of wifi networks from code
   bool connectToWiFi();
-  unsigned long timeStamp() { return _tt; }
-  int getStatus() { return _status; }
-  int nwkIndex();
   const char* getIP() { return _ipAddress; }
-  private:
   unsigned long calculateTime();
   
   unsigned long _tt;

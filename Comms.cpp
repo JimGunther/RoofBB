@@ -4,7 +4,7 @@
 // class Comms: responsible for wifi (but not MQTT) communications
 // Also reads stored Wifi login credentials
 
-// -------------------------------- Version of 17/07/2024 --------------------------------------------
+// -------------------------------- Version of 02/08/2024 --------------------------------------------
 Comms::Comms() {};  // empty constructor
 
 /*****************************************************************************************************
@@ -64,7 +64,7 @@ bool Comms::connectToWiFi() {
   while ((WiFi.status() != WL_CONNECTED) && numTries++ < 5) {
     delay(100);
   }
-  Serial.print("Status: "); Serial.println(WiFi.status());
+  //Serial.print("Status: "); Serial.println(WiFi.status());
   Serial.print("WiFi connected. IP Address: ");
   strcpy(_ipAddress, WiFi.localIP().toString().c_str());
   Serial.println(_ipAddress); // this is IP address for HUB, NOT MQTT server!
@@ -125,4 +125,3 @@ returns: unsigned long integer representing time (seconds since 1/1/2000) if suc
     timeinfo.tm_sec;
   return t;
   }
-

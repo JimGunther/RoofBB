@@ -5,16 +5,15 @@
 #include "Chrono.h"
 #include <WiFi.h>
 #include <PubSubClient.h>
-//=============================================== Version of 30/07/2024 ========================================================
+//=============================================== Version of 03/08/2024 ========================================================
 // Status: NEW "Bare Bones" version requiring major simplification: corresponding changes need to Shed 
 // RoofBB.ino: sketch to interface with all sensors and counters and send results in CSV form at
 // frequent intervals (currently 3 secs) to Shed.
-// Also sends hourly and weekly data (MAJOR CHANGE NEEDED) on prompting from shed processor via MQTT Wifi link
+// Also sends hourly on prompting from shed processor (catchup only) via MQTT Wifi link
 // Designed for ESP32
 
 // struct hdc acts as a kind of "primary key" unique identifier for each "package" of weather data (realtime, hourly or daily)
 
-// MAY NOT BE NEEDED ANY MORE?
 struct hdc {
   int day;
   int hour;
@@ -113,23 +112,16 @@ Sensors sensors;
 Comms comms;
 Chrono chrono;
 
-// global variables: REVIEW!
+// global variables: REVIEWED 01/08
 int loopCount;
 unsigned long loopStart;
 unsigned long loopEnd;
-time_t timeNow;
-int prevDay;
-int lastSavedHour, lastShedHour;
-int hrReq, dyReq; // by shed
 int _prevHour;
 bool _bUnplugged;
 int volts;
-//bool prevVolts;
 char dummy[BUF_LEN] = ",0,0,0,0,0,0,0,0,0,0";
-char dayDummy[BUF_LEN] = ",0,1,2,3,4,5,6,7,8,9,10";
 char rtBuf[BUF_LEN];
 char hrBuf[BUF_LEN];
-char dayBuf[DAYBUF_LEN];
 char isoBoot[ISO_LEN];  // boot time in ISO format
 char latestHr[ISO_LEN];
 char latestDay[ISO_LEN];
@@ -147,12 +139,13 @@ void setup() {
   Serial.print("Boot: "); Serial.println(isoBoot);
   sensors.begin();
   rainWind.begin(chrono.Hour(u));
+  pinMode(VoltsPin, INPUT);
+  pinMode(LEDPin, OUTPUT);
   bool bMQTT = qtSetup();
   if (!bMQTT) {
     Serial.println("MQTT setup failed. No MQTT comms. Check RPi is powered and running.");
   }
   loopCount = 0;
-  //prevVolts = false;
   
   _prevHour = chrono.hour();
   if (_bUnplugged) {
@@ -165,8 +158,7 @@ void setup() {
   // Start with a nice empty i/c Buffer
   flushICBuffer();
 
-  postMessage("RoofBB ver 30/07/2024: Roof setup finished.");
-  
+  postMessage("RoofBB ver 03/08/2024: Roof setup finished."); 
 }
 
 /************************************************************************************************************
@@ -190,7 +182,6 @@ void loop() {
     if (chrono.hourChanged()) { 
       int h = chrono.hour();
       int d = chrono.date(); // now locally determined
-      // MAKE CHANGES HERE to deal with catchup requests (just-in-case storage)
       rainWind.storeHrResults(h);
       sensors.storeHrResults(h);
       Serial.print("Data saved for ");  // TEMP
@@ -205,11 +196,7 @@ void loop() {
     hdc hd1 = shedRequested();
     if (hd1.day != 0) {  // by Shed
       Serial.print("Shed req");Serial.print(hd1.hdr);Serial.print(hd1.day);Serial.print(":");Serial.println(hd1.hour);  // TEMP
-      if (hd1.hdr == 'H') bHDCSent = postHr(hd1.day, hd1.hour);
-      //else {
-        //if (hd1.hdr == 'D') bHDCSent = postDay(hd1.day); // day's results sent at the end of the day
-        //else bHDCSent = postCatchup(hd1.hour);
-      //}
+      bHDCSent = postHr(hd1.day, hd1.hour);
     }
   }
   // END ZONE 4 -----------------------------------------------------------------------------------
@@ -217,10 +204,11 @@ void loop() {
   // ZONE 12: EVERY 12 LOOPS (3 secs) -------------------------------------------------------------
   if ((loopCount % ZONE12) == 0) {
     rainWind.onWDUpdate();
-     qtReconnect(); // checks connection and attempts retry if none
+    qtReconnect(); // checks connection and attempts retry if none
     if (!bHDCSent) { // don't send RT if hourly, daily or catchup CSV string has been sent this loop
       getAndPostRT();
     }
+    digitalWrite(LEDPin, !digitalRead(LEDPin)); // blink
   }
 
   // ZONE 40: EVERY 40 LOOPS (10 secs) ------------------------------------------------------------
@@ -236,8 +224,6 @@ void loop() {
   if (loopCount == 0) {
     // REVIEW BELOW
     volts = checkBattery();
-    Serial.print("volts:");  // to show roof "alive" only when Serial monitor available
-    Serial.println(volts);
   }
   
   //Loop timing zones end here
@@ -268,7 +254,7 @@ parameters:
 returns: void
 *********************************************************************************************************************/
 void postCSV(char ch, const char* isoDateSaved, const char* csv) {
-  char buf[DAYBUF_LEN];
+  char buf[BUF_LEN];
   sprintf(buf, "%c%s%s%02d", ch, isoDateSaved, csv, volts);  // analog read of volts pin added 21/06/2024
   qtClient.loop();
   qtClient.publish("ws/csv", buf, false);
@@ -282,7 +268,7 @@ parameters:
 returns: void
 *********************************************************************************************************************/
 void postMessage(const char* mess) {
-  char buf[DAYBUF_LEN];
+  char buf[BUF_LEN];
   buf[0] = 'M';
   strcpy(buf + 1,chrono.nowISO(TRUNC_NONE));
   int len = strlen(buf);
@@ -331,7 +317,6 @@ bool postHr(int dy, int hr) {
       sensors.getCSVHour(hr, hrBuf + len);
       Serial.print("RW+S hourly");
       Serial.println(hrBuf);
-      // ERRORS AROUND HERE!
       postCSV('H', isoT, hrBuf);
       return true;
     }
@@ -344,23 +329,7 @@ bool postHr(int dy, int hr) {
 }
 
 /************************************************************************************************************
-postCatchup(): method to post hourly CSV data to Shed soon after the Shed has booted up: can deal with up to 24 hrs of data.
-data consists of CSV values of anemometer revs allocated to each analog / 128 value (32 entries in all)
-parameters: hr: int: hour requested
-returns: bool (true if successful)
-*************************************************************************************************************/
-// REVIEW / REWRITE HERE 18/07
-bool postCatchup(int hr) {
-  char tempBuf[ISO_LEN];
-  char t2Buf[CATCHUP_LEN];
-  sprintf(tempBuf, "CH99D%02d", hr);
-  //rainWind.getCatchup(hr, t2Buf);
-  postCSV('C', tempBuf, t2Buf);
-  return true;
-}
-
-/************************************************************************************************************
-shedRequested(): confirms Shed wants hourly / daily data and returns a struct hdc object. No request iff hd.day == 0
+shedRequested(): confirms Shed wants hourly data and returns a struct hdc object. No request iff hd.day == 0
 parameters: none
 returns: hdc structure (hour, day, header character): day ==0 signifies no request
 *************************************************************************************************************/
@@ -398,12 +367,9 @@ hdc shedRequested() {
 
 // UNDER REVIEW BELOW
 void flushICBuffer() {
-  //int i;
-  //for (i = 0; i < QT_LEN; i++) qticBuf[i] = '\0';
 }
 
-// checkBattery(): awaiting Clive's info
+// checkBattery():
 int checkBattery() {
-  // this method is currently a dummy pending battery circuit details
   return analogRead(VoltsPin);
 }
