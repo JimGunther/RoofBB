@@ -11,7 +11,7 @@
 #define IP_LEN 20
 #define SHED_SSID "BTB-NTCHT6"
 #define HOME_SSID "BT-S7AT5Q"
-#define RICH_SSID "GOULD_??"
+#define RICH_SSID "GOULD_TP"
 #define SHED_PWD "UJDafGKptCvXb4"
 #define HOME_PWD "yJrbR6x6TkDP7g"
 #define RICH_PWD "starwest"
