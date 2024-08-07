@@ -1,7 +1,7 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-// ****************************** Version of 01.08.2024 ******************************************
+// ****************************** Version of 07.08.2024 ******************************************
 // General Constants
 // Wifi-related
 #define NUM_NETWORKS 3
