@@ -46,7 +46,7 @@ bool Chrono::hourChanged() {
 /*************************************************************************************************
 Year(): gets year from unsigned long input
 parameters: u: unsigned long representing seconds since 1/1/2000
-returns: int: claculated year
+returns: int: calculated year
 **************************************************************************************************/
 int Chrono::Year(unsigned long u) {
   int d2000 = u / SECS_PER_DAY;  // days since 01.01.2000

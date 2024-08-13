@@ -85,7 +85,7 @@ void RainWind::resetHour(int hr) { // STILL NEEDED I THINK! MAYBE NOT AFTER Rese
 // Various methods to update values in "real time" zones -----------------------------------------
 
 /*************************************************************************************************
-onWDUpdate(): adds revs count since last call to the total for the previous wind direction (called every 3 secs)
+onWDUpdate(): adds revs count since last call to the total for the wind direction (called every 3 secs)
 parameters: none
 returns: int: the analog reading / 128 (0-31)
 **************************************************************************************************/

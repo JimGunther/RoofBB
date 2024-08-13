@@ -4,7 +4,7 @@
 // class Comms: responsible for wifi (but not MQTT) communications
 // Also reads stored Wifi login credentials
 
-// -------------------------------- Version of 02/08/2024 --------------------------------------------
+// -------------------------------- Version of 11/08/2024 --------------------------------------------
 Comms::Comms() {};  // empty constructor
 
 /*****************************************************************************************************
@@ -21,7 +21,11 @@ void Comms::begin() {
   if (!connectToWiFi()) {
     _status = 1;
     Serial.println("WiFi connection failed.");
-    return;
+  
+    while(1) {
+      digitalWrite(LEDPin, !digitalRead(LEDPin));
+      delay(200);
+    };
   }
   _tt = calculateTime();
   if (_tt == 0UL) {

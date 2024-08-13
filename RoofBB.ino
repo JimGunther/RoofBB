@@ -5,7 +5,7 @@
 #include "Chrono.h"
 #include <WiFi.h>
 #include <PubSubClient.h>
-//=============================================== Version of 03/08/2024 ========================================================
+//=============================================== Version of 10/08/2024 ========================================================
 // Status: NEW "Bare Bones" version requiring major simplification: corresponding changes need to Shed 
 // RoofBB.ino: sketch to interface with all sensors and counters and send results in CSV form at
 // frequent intervals (currently 3 secs) to Shed.
@@ -101,8 +101,8 @@ bool qtReconnect() {
       delay(3000);
     }
   }
-  if (numTries < 3) return true;
-  else return false;
+  
+  return qtClient.connected();
 }
 // LEAVE THE ABOVE ALONE! (24/06/2024)
 // ------------------------------------------------------------------------------------------------
@@ -131,6 +131,7 @@ setup(): runs once at startup: sets up comms, clock (Chrono), rainwind and sensi
 ***********************************************************************************************************/
 void setup() {
   Serial.begin(115200);
+  pinMode(LEDPin, OUTPUT);
   comms.begin();
   nwkIx = comms.nwkIndex();
   unsigned long u = comms.timeStamp();
@@ -140,10 +141,13 @@ void setup() {
   sensors.begin();
   rainWind.begin(chrono.Hour(u));
   pinMode(VoltsPin, INPUT);
-  pinMode(LEDPin, OUTPUT);
   bool bMQTT = qtSetup();
   if (!bMQTT) {
     Serial.println("MQTT setup failed. No MQTT comms. Check RPi is powered and running.");
+    while (1) {
+      digitalWrite(LEDPin, !digitalRead(LEDPin));
+      delay(800);
+    };
   }
   loopCount = 0;
   
@@ -158,7 +162,8 @@ void setup() {
   // Start with a nice empty i/c Buffer
   flushICBuffer();
 
-  postMessage("RoofBB ver 03/08/2024: Roof setup finished."); 
+
+  postMessage("RoofBB ver 11/08/2024: Roof setup finished."); 
 }
 
 /************************************************************************************************************
@@ -166,6 +171,7 @@ loop(): runs continuously, looping every 0.25 seconds with slower "zones": see d
 *************************************************************************************************************/
 void loop() {
   bool bHDCSent = false; //reset at start of each loop
+  byte actFlag = 0;
   loopStart = millis();
   qtClient.loop();
 
@@ -178,6 +184,7 @@ void loop() {
   //ZONE 4: EVERY 4 LOOPS (1 sec) ---------------------------------------------------------
   if ((loopCount % ZONE4) == 0) {
     rainWind.updateBucketTips();
+    actFlag += 1;
     // SAVE HOURLY DATA
     if (chrono.hourChanged()) { 
       int h = chrono.hour();
@@ -191,12 +198,14 @@ void loop() {
       postMessage(mBuf);
       strcpy(latestHr, chrono.nowISO(TRUNC_HOUR));
       Serial.print("Latest hour saved: "); Serial.println(latestHr); // TEMP
+      actFlag += 2;
     }
     // CHECK IF SHED WANTS DATA: 
     hdc hd1 = shedRequested();
     if (hd1.day != 0) {  // by Shed
       Serial.print("Shed req");Serial.print(hd1.hdr);Serial.print(hd1.day);Serial.print(":");Serial.println(hd1.hour);  // TEMP
       bHDCSent = postHr(hd1.day, hd1.hour);
+      actFlag += 4;
     }
   }
   // END ZONE 4 -----------------------------------------------------------------------------------
@@ -204,9 +213,13 @@ void loop() {
   // ZONE 12: EVERY 12 LOOPS (3 secs) -------------------------------------------------------------
   if ((loopCount % ZONE12) == 0) {
     rainWind.onWDUpdate();
-    qtReconnect(); // checks connection and attempts retry if none
+    actFlag += 8;
+    if (!qtReconnect()) {
+      actFlag += 32;
+    } // checks connection and attempts retry if none
     if (!bHDCSent) { // don't send RT if hourly, daily or catchup CSV string has been sent this loop
       getAndPostRT();
+      actFlag += 64;
     }
     digitalWrite(LEDPin, !digitalRead(LEDPin)); // blink
   }
@@ -217,6 +230,7 @@ void loop() {
     bool b = sensors.updateAHT();
     bool bz = sensors.updateBMP();
     byte by = sensors.updateBH1750();
+    actFlag += 128;
   }
   // END ZONE 40 ----------------------------------------------------------------------------------
 
@@ -232,7 +246,7 @@ void loop() {
   loopEnd = millis();
   if ((loopEnd - loopStart) > LOOP_TIME) { // Code took over LOOP_TIME
     char mBuf[BUF_LEN];
-    sprintf(mBuf, "Long loop time: %ul", loopEnd - loopStart);
+    sprintf(mBuf, "Long loop time: %ul; Flag: %x", loopEnd - loopStart, actFlag);
     postMessage(mBuf);
   }
   else {  // wait until LOOP_TIME has elapsed

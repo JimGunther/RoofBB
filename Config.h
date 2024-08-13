@@ -1,7 +1,7 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-// ****************************** Version of 07.08.2024 ******************************************
+// ****************************** Version of 01.08.2024 ******************************************
 // General Constants
 // Wifi-related
 #define NUM_NETWORKS 3
@@ -11,7 +11,7 @@
 #define IP_LEN 20
 #define SHED_SSID "BTB-NTCHT6"
 #define HOME_SSID "BT-S7AT5Q"
-#define RICH_SSID "GOULD_TP"
+#define RICH_SSID "GOULD_??"
 #define SHED_PWD "UJDafGKptCvXb4"
 #define HOME_PWD "yJrbR6x6TkDP7g"
 #define RICH_PWD "starwest"

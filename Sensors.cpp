@@ -2,7 +2,7 @@
 #include "Arduino.h"
 #include "Sensors.h"
 
-// --------------------------------------- Version of 02/08/2024 ------------------------------------------
+// --------------------------------------- Version of 09/08/2024 ------------------------------------------
 // Sensors class acts as the interface between 4 I2C sensors and the main ino code
 Sensors::Sensors() : _aht(), _bmp()  {};
 
@@ -37,7 +37,7 @@ int Sensors::begin() {
 }
 
 /********************************************************************************************************
-update AHT(): The AHT sensor is read every 10 seconds (Zone40) and values stored in 2 _result fields (temperature and humidity)
+updateAHT(): The AHT sensor is read every 10 seconds (Zone40) and values stored in 2 _result fields (temperature and humidity)
 parameters: none
 returns: boolean: true if actual results, false if random numbers
 *********************************************************************************************************/
@@ -88,7 +88,7 @@ byte Sensors::updateBH1750() {
   if ((_sensorStatus & 4) == 0) {
     output = _bh1750a.readLightLevel();
     if (output < 0) _results.lightA = 0;
-    else _results.lightA = (int)(20.0 * log(1.0f + output)); // may need rescaling
+    else _results.lightA = (int)(13.0 * log(1.0f + output)); // may need rescaling
   }
   else {  // "random" mode
     unsigned long r = random(100); // arbitrary shift
@@ -98,7 +98,7 @@ byte Sensors::updateBH1750() {
 if ((_sensorStatus & 8) == 0) {
     output = _bh1750b.readLightLevel();
     if (output < 0) _results.lightB = 0;
-    else _results.lightB = (int)(20.0 * log(1.0f + output)); // may need rescaling
+    else _results.lightB = (int)(13.0 * log(1.0f + output)); // may need rescaling
   }
   else {  // "random" mode
     unsigned long r = random(100); // arbitrary shift
