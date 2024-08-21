@@ -18,7 +18,7 @@ struct wrHr {
   int gustHr;
 };
 // ----------------------------------------------------------------------------------------------------------
-//-------------------------------------- Version of 02.08.2024 ----------------------------------------------
+//-------------------------------------- Version of 21.08.2024 ----------------------------------------------
 
 // Class RainWind(): interface with the wind and rain detectors
 
@@ -26,7 +26,7 @@ class RainWind {
 
   public:
   RainWind();
-  void begin(int bootHr);
+  void begin();
   int onWDUpdate();
   void updateRevs();
   void updateBucketTips();

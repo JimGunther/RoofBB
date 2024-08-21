@@ -2,7 +2,7 @@
 #include "Arduino.h"
 #include "RainWind.h"
 
-// ------------------------------ Version of 30/07/2024 ---------------------------------
+// ------------------------------ Version of 21/08/2024 ---------------------------------
 
 // Interrupt Service Routines start here______________
 
@@ -53,7 +53,7 @@ begin(): initiates RainWind object: attaches 2 interrupts, sets pin modes and ca
 parameters: none
 returns: void
 **********************************************************************************************************/
-void RainWind::begin(int bootHr) {
+void RainWind::begin() {
   attachInterrupt(digitalPinToInterrupt(RainPin), buckets_tipped, CHANGE); // rain buckets
   attachInterrupt(digitalPinToInterrupt(RevsPin), one_Rotation, CHANGE);  // anemometer
   
@@ -62,7 +62,7 @@ void RainWind::begin(int bootHr) {
   pinMode(RevsPin, INPUT_PULLUP);
   pinMode(WDPin, INPUT_PULLUP);
   
-  resetHour(bootHr);
+  //resetHour(bootHr);
   _results.maxRevs = 0;
 }
 
