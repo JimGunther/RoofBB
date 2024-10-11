@@ -135,14 +135,15 @@ void setup() {
   sensors.begin();
   rainWind.begin();
   pinMode(VoltsPin, INPUT);
-  bool bMQTT = qtSetup();
-  if (!bMQTT) {
+
+  int my_count = 0;
+  while ( !qtSetup ) {
     Serial.println("MQTT setup failed. No MQTT comms. Check RPi is powered and running.");
-    while (1) {
-      digitalWrite(LEDPin, !digitalRead(LEDPin));
-      delay(800);
-    };
+    digitalWrite(LEDPin, !digitalRead(LEDPin));
+    delay(800);
+    if ( my_count++ == 11 } ESP_restart();
   }
+
   loopCount = 0;
   
   if (_bUnplugged) {
