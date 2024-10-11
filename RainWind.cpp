@@ -62,7 +62,9 @@ void RainWind::begin() {
   pinMode(RevsPin, INPUT_PULLUP);
   pinMode(WDPin, INPUT_PULLUP);
   
-  resetHour(bootHr);
+  for ( int hr = 0; hr < 24; hr++ ) )
+    resetHour( hr );
+  }
   _results.maxRevs = 0;
 }
 
