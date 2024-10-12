@@ -137,7 +137,7 @@ void setup() {
   pinMode(VoltsPin, INPUT);
 
   int my_count = 0;
-  while ( !qtSetup ) {
+  while ( !qtSetup() ) {
     Serial.println("MQTT setup failed. No MQTT comms. Check RPi is powered and running.");
     digitalWrite(LEDPin, !digitalRead(LEDPin));
     delay(800);
