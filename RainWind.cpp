@@ -2,7 +2,7 @@
 #include "Arduino.h"
 #include "RainWind.h"
 
-// ------------------------------ Version of 21/08/2024 ---------------------------------
+// ------------------------------ Version of 12/10/2024 ---------------------------------
 
 // Interrupt Service Routines start here______________
 
@@ -62,7 +62,9 @@ void RainWind::begin() {
   pinMode(RevsPin, INPUT_PULLUP);
   pinMode(WDPin, INPUT_PULLUP);
   
-  resetHour(bootHr);
+  for (int hr = 0; hr < HPD; hr++) {
+    resetHour(hr);
+  }
   _results.maxRevs = 0;
 }
 
