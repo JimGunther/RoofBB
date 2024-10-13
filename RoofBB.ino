@@ -141,7 +141,7 @@ void setup() {
     Serial.println("MQTT setup failed. No MQTT comms. Check RPi is powered and running.");
     digitalWrite(LEDPin, !digitalRead(LEDPin));
     delay(800);
-    if ( my_count++ == 11 } esp_restart();
+    if ( my_count++ == 11 ) esp_restart();
   }
 
   loopCount = 0;
